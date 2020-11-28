@@ -1,0 +1,655 @@
+<!Doctype HTML>
+
+<html lang='en'>
+
+<head>
+
+<title>AJAX example</title>
+
+<script>
+
+ 
+
+//TMJRocks javascript Library code
+
+ 
+
+function $$$(cid)
+
+{
+
+let element=document.getElementById(cid);
+
+if(!element) return null;
+
+return new TMJRockElement(element);
+
+}
+
+ 
+
+$$$.model={
+
+"onStartup":[],
+
+"accordian":[]
+
+}
+
+ 
+
+function accordianHeadingClicked(accordianIndex,panelIndex)
+
+{
+
+//alert(accordianIndex+","+panelIndex);
+
+if($$$.model.accordian[accordianIndex].expandedIndex!=-1) $$$.model.accordian[accordianIndex].panels[$$$.model.accordian[accordianIndex].expandedIndex].style.display='none';
+
+$$$.model.accordian[accordianIndex].panels[panelIndex+1].style.display=$$$.model.accordian[accordianIndex].panels[panelIndex+1].oldDisplay;
+
+$$$.model.accordian[accordianIndex].expandedIndex=panelIndex+1;
+
+}
+
+ 
+
+$$$.toAccordian=function(accordian){
+
+var panels=[];
+
+var expandedIndex=-1;
+
+let children=accordian.childNodes;
+
+for(var i=0;i<children.length;i++)
+
+{
+
+if(children[i].nodeName=="H3") panels[panels.length]=children[i];
+
+if(children[i].nodeName=="DIV") panels[panels.length]=children[i];
+
+}
+
+if(panels.length%2!=0) throw "Some ambigious arrangement in panels";
+
+for(var i=0;i<panels.length;i+=2)
+
+{
+
+if(panels[i].nodeName!="H3") throw "Some ambigious arrangement in panels";
+
+if(panels[i+1].nodeName!="DIV") throw "Some ambigious arrangement in panels";
+
+}
+
+function createClickHandler(accordianIndex,panelIndex)
+
+{
+
+return function(){
+
+accordianHeadingClicked(accordianIndex,panelIndex);
+
+}
+
+}
+
+let accordianIndex=$$$.model.accordian.length;
+
+for(var i=0;i<panels.length;i+=2)
+
+{
+
+panels[i].onclick=createClickHandler(accordianIndex,i);
+
+panels[i+1].oldDisplay=panels[i+1].style.display;
+
+panels[i+1].style.display='none';
+
+}
+
+$$$.model.accordian[accordianIndex]=
+
+{
+
+"panels":panels,
+
+"expandedIndex":-1
+
+}
+
+}
+
+ 
+
+$$$.onDocumentLoaded=function(func){
+
+if(typeof func!="function") throw "Expected function ";
+
+$$$.model.onStartup[$$$.model.onStartup.length]=func;
+
+};
+
+ 
+
+$$$.initFramework=function(){
+
+var allTags=document.getElementsByTagName("*");
+
+let t=null
+
+for(var i=0;i<allTags.length;i++)
+
+{
+
+t=allTags[i];
+
+if(t.hasAttribute("accordian"))
+
+{
+
+if(t.getAttribute("accordian")=="true") $$$.toAccordian(t);
+
+}
+
+}
+
+for(var i=0;i<$$$.model.onStartup.length;i++)
+
+{
+
+$$$.model.onStartup[i]();
+
+}
+
+}
+
+ 
+
+window.addEventListener('load',function(){
+
+$$$.initFramework();
+
+});
+
+ 
+
+function TMJRockElement(element)
+
+{
+
+this.element=element;
+
+this.html=function(content){
+
+if(typeof this.element.innerHTML=="string")
+
+{
+
+if(typeof content=="string")
+
+{
+
+this.element.innerHTML=content;
+
+}
+
+return this.element.innerHTML;
+
+}
+
+return null;
+
+}
+
+ 
+
+this.value=function(content){
+
+if(typeof this.element.value)
+
+{
+
+if(typeof content=="string")
+
+{
+
+this.element.value=content;
+
+}
+
+return this.element.value;
+
+}
+
+return null;
+
+}
+
+ 
+
+this.fillComboBox=function(jsonData){
+
+if(this.element.nodeName!="SELECT") throw "fillComboBox should be of type Select in call to ajax";
+
+if(jsonData["dataSource"])
+
+{
+
+let designations=jsonData["dataSource"];
+
+if(jsonData["text"]==false) throw "text property is missing";
+
+if(typeof jsonData["text"]!="string") throw "text property should be of type String in a call to ajax";
+
+let texts=jsonData["text"];
+
+if(typeof jsonData["value"]!="string") throw "value property should be of type String in a call to ajax";
+
+if(jsonData["value"]==false) throw "value property is missing";
+
+let values=jsonData["value"];
+
+let comboBox=this.element;
+
+var obj;
+
+ 
+
+if(jsonData["firstOption"])
+
+{
+
+let firstOption=jsonData["firstOption"];
+
+if(typeof(firstOption.text)!="string" ) throw "firstOption text should be of type string";
+
+if(typeof(firstOption.value)!="string" ) throw "firstOption value should be of type string";
+
+let foText=firstOption.text;
+
+let foValue=firstOption.value;
+
+obj=document.createElement("option");
+
+obj.text=foText;
+
+obj.value=foValue;
+
+comboBox.appendChild(obj);
+
+}
+
+let ctext;
+
+let cvalue;
+
+for(var i=0;i<designations.length;i++)
+
+{
+
+obj=document.createElement("option");
+
+ctext=designations[i].text;
+
+cvalue=designations[i].value;
+
+obj.text=ctext;
+
+obj.value=cvalue;
+
+comboBox.appendChild(obj);
+
+}
+
+}
+
+};
+
+ 
+
+}
+
+ 
+
+$$$.ajax=function(jsonObject){
+
+if(!jsonObject["url"]) throw "URL property is missing in call to ajax";
+
+let url=jsonObject["url"];
+
+if((typeof url)!="string") throw "URL property should bo of type string in call to ajax";
+
+let methodType="GET";
+
+if(jsonObject["methodType"])
+
+{
+
+methodType=jsonObject["methodType"];
+
+if((typeof methodType)!="string") throw "method tpe should be of type String";
+
+methodType=methodType.toUpperCase();
+
+if(["GET","POST"].includes(methodType)==false) throw "method type should be GET \ POST in call to ajax";
+
+}
+
+let onSuccess=null;
+
+if(jsonObject["success"])
+
+{
+
+onSuccess=jsonObject["success"];
+
+if((typeof onSuccess)!="function") throw "Success property should be of type function in call to ajax";
+
+}
+
+let onFailure=null;
+
+if(jsonObject["failure"])
+
+{
+
+onFailure=jsonObject["failure"];
+
+if((typeof onFailure)!="function") throw "Failure property should be of type function in call to ajax";
+
+}
+
+if(methodType=="GET")
+
+{
+
+var xmlHttpRequest=new XMLHttpRequest();
+
+xmlHttpRequest.onreadystatechange=function(){
+
+var responseData;
+
+if(this.readyState==4)
+
+{
+
+if(this.status==200)
+
+{
+
+responseData=this.responseText;
+
+if(onSuccess) onSuccess(responseData);
+
+}
+
+else
+
+{
+
+if(onFailure) onFailure();
+
+}
+
+}
+
+};
+
+if(jsonObject["data"])
+
+{
+
+let data=jsonObject["data"];
+
+let qsName;
+
+let qsValue;
+
+let qs="";
+
+let xx=0;
+
+for(prop in data)
+
+{
+
+if(xx==0) qs="?";
+
+if(xx>0) qs=qs+"&";
+
+xx++;
+
+qsName=encodeURI(prop);
+
+qsValue=encodeURI(data[prop]);
+
+qs=qs+qsName+"="+qsValue;
+
+}
+
+alert("Qs  "+qs);
+
+}
+
+ 
+
+xmlHttpRequest.open(methodType,url,true);
+
+xmlHttpRequest.send();
+
+}//get ends here
+
+ 
+
+if(methodType=="POST")
+
+{
+
+var xmlHttpRequest=new XMLHttpRequest();
+
+xmlHttpRequest.onreadystatechange=function(){
+
+var responseData;
+
+if(this.readyState==4)
+
+{
+
+if(this.status==200)
+
+{
+
+responseData=this.responseText;
+
+if(onSuccess) onSuccess(responseData);
+
+}
+
+else
+
+{
+
+if(onFailure) onFailure();
+
+}
+
+}
+
+};
+
+let jsonData={};
+
+let qs;
+
+let sendJSON=jsonObject["sendJSON"];
+
+if(!sendJSON) sendJSON=false;
+
+if((typeof sendJSON)!="boolean") throw "Boolean sendJson value is required";
+
+if(jsonObject["data"])
+
+{
+
+jsonData=jsonObject["data"];
+
+let qsName;
+
+let qsValue;
+
+qs="";
+
+let xx=0;
+
+for(prop in jsonData)
+
+{
+
+//if(xx==0) qs="?";
+
+if(xx>0) qs=qs+"&";
+
+xx++;
+
+qsName=encodeURI(prop);
+
+qsValue=encodeURI(jsonData[prop]);
+
+qs=qs+qsName+"="+qsValue;
+
+}
+
+alert("Qs  "+qs);
+
+}
+
+xmlhr.open('POST','url',true);
+
+if(sendJSON==false)
+
+{
+
+xmlhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+
+xmlhr.send(qs);
+
+}
+
+else
+
+{
+
+xmlhr.setRequestHeader("Content-Type","application/json");
+
+xmlhr.send(JSON.stringify(jsonData));
+
+}
+
+}//post ends here
+
+ 
+
+ 
+
+}//TMJRocks javascript Library code ends here
+
+ 
+
+</script>
+
+<body>
+
+<h1>Accordian pane</h1>
+
+<div accordian="true"><h3>Heading 1</h3>
+
+<div>
+
+somesome1 somesome1 somesome1<br>
+
+somesome1 somesome1 somesome1<br>
+
+somesome1 somesome1 somesome1
+
+</div>
+
+<h3>Heading 2</h3>
+
+<div>
+
+somesome2 somesome2 somesome2 <br>
+
+somesome2 somesome2 somesome2 <br>
+
+somesome2 somesome2 somesome2
+
+ 
+
+</div>
+
+<h3>Heading 3</h3>
+
+<div>
+
+somesome3 somesome3 somesome3 <br>
+
+somesome3 somesome3 somesome3 <br>
+
+somesome3 somesome3 somesome3
+
+ 
+
+</div>
+
+</div>
+
+ 
+
+<div accordian="true"><h3>Heading 1ooooo</h3>
+
+<div>
+
+somesome1 somesome1 somesome1<br>
+
+somesome1 somesome1 somesome1<br>
+
+somesome1 somesome1 somesome1
+
+</div>
+
+<h3>Heading 200000</h3>
+
+<div>
+
+somesome2 somesome2 somesome2 <br>
+
+somesome2 somesome2 somesome2 <br>
+
+somesome2 somesome2 somesome2
+
+ 
+
+</div>
+
+<h3>Heading 3000000</h3>
+
+<div>
+
+somesome3 somesome3 somesome3 <br>
+
+somesome3 somesome3 somesome3 <br>
+
+somesome3 somesome3 somesome3
+
+ 
+
+</div>
+
+</div>
+
+</body>
+
+</html>
