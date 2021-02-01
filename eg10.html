@@ -1,0 +1,121 @@
+<!Doctype HTML>
+<html lang='en'>
+<head>
+<title>AJAX example</title>
+<style>
+.modalMask{
+width:100%;
+height:100%;
+left:0;
+top:0;
+background-color:gray;
+border:2px solid red;
+opacity:70%;
+position:fixed;
+}
+.modal{
+width:400px;
+min-width:400px;
+height:300px;
+min-height:300px;
+background-color:blue;
+position:fixed;
+top:0;
+left:0;
+bottom:0;
+right:0;
+margin:auto;
+border:2px solid white;
+overflow:auto;
+}
+.closeButton{
+float:right;
+padding:2px 7px;
+cursor:pointer;
+}
+</style>
+<script>
+function Modal(cid)   //class
+{
+alert(cid)
+objectAddress=this;
+var contentId=cid;
+this.onOpen=null;
+this.onClose=null;
+var contentReference=document.getElementById(cid);
+alert(contentReference)
+var contentParentReference=contentReference.parentElement;
+var contentIndex=0;
+while(contentIndex<contentParentReference.children.length)
+{
+if(contentReference==contentParentReference.children[contentIndex]) break;
+contentIndex++;
+}
+var modalMaskDivision=document.createElement('div');
+modalMaskDivision.classList.add("modalMask");
+var modalDivision=document.createElement('div');
+modalDivision.classList.add("modal");
+var closeButtonSpan=document.createElement('span');
+closeButtonSpan.classList.add('closeButton');
+var closeButtonMarker=document.createTextNode("X");
+closeButtonSpan.append(closeButtonMarker);
+modalDivision.appendChild(closeButtonSpan);
+contentReference.remove();
+modalDivision.appendChild(contentReference);
+
+this.show=function()
+{
+document.body.appendChild(modalMaskDivision);
+document.body.appendChild(modalDivision);
+if(this.onOpen) this.onOpen();
+}
+
+closeButtonSpan.onclick=function(){
+contentReference.remove();
+modalMaskDivision.remove();
+modalDivision.remove();
+if(contentParentReference.children.length==contentIndex)
+{
+contentParentReference.appendChild(contentReference);
+}
+else
+{
+contentParentReference.insertBefore(contentReference,contentParentReference.children[contentIndex]);
+}
+if(objectAddress.onClose()) objectAddress.onClose();
+}
+}
+
+
+
+
+function CreateModal1()
+{
+var modal=new Modal("ab");
+modal.onOpen=function(){
+alert('Modal opened');
+};
+modal.onClose=function(){
+alert('Modal closed');
+};
+modal.show();
+}
+function CreateModal2()
+{
+var modal=new Modal('pq');
+modal.onOpen=function(){
+alert('Modal opened');
+};
+modal.onClose=function(){
+alert('Modal closed');
+};
+modal.show();
+}
+</script>
+<body>
+<button onclick='CreateModal1()'>Show First Modal</button>
+<button onclick='CreateModal2()'>Show Second Modal</button>
+<div id='ab'>God is great</div>
+<div id='pq'>God is everywhere</div>
+</body>
+</html>

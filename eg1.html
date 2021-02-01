@@ -1,0 +1,95 @@
+<!Doctype HTML>
+<html lang='en'>
+<head>
+<title>AJAX example</title>
+<script>
+//TMJRocks javascript Library code
+
+function $$$(cid)
+{
+var element=document.getElementById(cid);
+return new TMJRockElement(element);
+}
+function TMJRockElement(element)
+{
+this.element=element;
+this.fillComboBox=function(content){
+var data=content["dataSource"];
+var text=content["text"];
+var value=content["value"];
+var obj;
+var designationComboBox=this.element;
+for(var i=0;i<data.length;i++)
+{
+obj=document.createElement("option");
+obj.value=data[i].code;
+obj.text=data[i].title;
+designationComboBox.appendChild(obj);
+}
+}
+}
+
+$$$.ajax=function(obj){
+var url=obj.url;
+var methodType=obj.methodType;
+//alert(url);
+var xmlHttpRequest=new XMLHttpRequest();
+xmlHttpRequest.onreadystatechange=function(){
+var responseData;
+if(this.readyState==4)
+{
+if(this.status==200)
+{
+responseData=this.responseText;
+alert(responseData);
+var success=obj.success;
+success(responseData);
+}
+else
+{
+var failure=obj.failure;
+failure();
+}
+}
+}
+
+xmlHttpRequest.open(methodType,url,true);
+xmlHttpRequest.send();
+
+}
+
+//TMJRocks javascript Library code ends here
+
+function populateDesignations()
+{
+$$$.ajax({
+"url": "servletOne",
+"methodType": "GET",
+"success": function(responseData){
+var designations=JSON.parse(responseData);
+$$$("designationCode").fillComboBox({
+"dataSource":designations,
+"text":"title",
+"value":"code",
+"firstOption":{
+"text":"<select Designation>",
+"value":"-1"
+}
+});
+},
+"failure": function(){
+alert('some problem exist');
+}
+});
+}
+window.addEventListener('load',populateDesignations);
+</script>
+</head>
+<body>
+<h1>Get type request</h1>
+<select id='designationCode'>
+</select>
+<br><br>
+<a href='/TMJRocks/index.html'>Home</a>
+</body>
+</html>
